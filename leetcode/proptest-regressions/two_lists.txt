@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc dfc7d8edcd6146959e9c9b61ee32b5f0c3ee6cf5ee44d75c2284658aef4eca9e # shrinks to input = _TwoAlgorithmsShouldGiveSameAnswerArgs { nums1: [], nums2: [0, -1] }
