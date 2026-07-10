@@ -1,7 +1,4 @@
-mod codility_word_machine;
-mod google_find_the_longest_word;
-mod graph;
-mod linked_list;
+mod q2_add_two_numbers;
 mod q100_same_tree;
 mod q121_best_time_to_buy_and_sell_stock;
 mod q128_longest_consecutive_sequence;
@@ -19,8 +16,11 @@ mod q2571_minimum_operations_to_reduce_an_integer_to_0;
 mod q572_subtree_of_another_tree;
 mod q5_longest_palindromic_substring;
 mod q647_palindromic_substrings;
-mod tree;
-mod hacker_graph_1;
+// canonical
+mod q88_merge_sorted_array;
+mod q150_evaluate_reverse_polish_notation;
+mod q2138_divide_a_string_into_groups_of_size_k;
+
 
 #[derive(Debug, PartialEq, Eq)]
 struct TreeNode {

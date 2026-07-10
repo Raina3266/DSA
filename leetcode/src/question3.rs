@@ -22,3 +22,11 @@ pub fn length_of_longest_substring(s: &str) -> usize {
     answer
 }
 
+result = match result.check_mul(10) {
+    Some(result) => result,
+    None => return 0,
+}
+
+result = match result.check_add(last_di)
+
+fn reverse()

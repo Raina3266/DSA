@@ -18,8 +18,14 @@ mod adjacency_list {
     use std::collections::{HashMap, HashSet};
 
     struct Graph {
-        nodes: Vec<String>,
+        nodes: Vec<i32>,
         edges: HashMap<usize, HashSet<usize>>,
+    }
+
+    impl Graph {
+        fn visit_starting_from(&self, index: usize, mut visit: impl FnMut(i32)) {
+            let mut to_visit = 
+        }
     }
 }
 
