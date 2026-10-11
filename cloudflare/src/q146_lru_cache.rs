@@ -90,14 +90,11 @@ impl LRUCache {
         };
         // 2. Change the next field of the last
         match &mut *last.borrow_mut() {
-            Node::Data {
-                key,
-                value,
-                prev,
-                next,
-            } => {
+            Node::Data { next, .. } => {
                 *next = input.clone();
             }
+            // empty list
+            Node::Head(next) => *next = input.clone(),
             _ => unreachable!(),
         }
         // 3. Change the prev and next field of the input
@@ -126,27 +123,17 @@ impl LRUCache {
             ),
             _ => unreachable!("remove expects a data node"),
         };
-        // 2. Change the next field of the prev node
+        // 2. Change the next field of the prev node to input node
         match &mut *prev_node.borrow_mut() {
-            Node::Data {
-                key,
-                value,
-                prev,
-                next,
-            } => {
+            Node::Data { next, .. } => {
                 *next = next_node.clone();
             }
             Node::Head(next) => *next = next_node.clone(),
             _ => unreachable!("remove expects a data node"),
         }
-        // 3. Change the prev field of the next node
+        // 3. Change the prev field of the next node to input node
         match &mut *next_node.borrow_mut() {
-            Node::Data {
-                key,
-                value,
-                prev,
-                next,
-            } => {
+            Node::Data { prev, .. } => {
                 *prev = Rc::downgrade(&prev_node);
             }
             Node::Tail(prev) => *prev = Rc::downgrade(&prev_node),
@@ -206,30 +193,28 @@ impl LRUCache {
     pub fn put(&mut self, key: i32, val: i32) {
         if let Some(node) = self.cache.get(&key) {
             match &mut *node.borrow_mut() {
-                Node::Data {
-                    key,
-                    value,
-                    prev,
-                    next,
-                } => *value = val,
+                Node::Data { value, .. } => *value = val,
                 _ => unreachable!(),
             }
+            self.move_to_end(node.clone());
         } else {
             if self.is_full() {
-                self.pop_front();
+                if let Some(evicted) = self.pop_front() {
+                    let evict_key = match &*evicted.borrow() {
+                        Node::Data { key, .. } => *key,
+                        _ => unreachable!(),
+                    };
+                    self.cache.remove(&evict_key);
+                };
             }
-            let old_last = match &*self.tail.borrow() {
-                Node::Data { prev, .. } => prev.clone(),
-                Node::Head(head_node) => Rc::downgrade(&head_node),
-                _ => unreachable!(),
-            };
-            let last = Node::Data {
+            let node = Rc::new(RefCell::new(Node::Data {
                 key,
                 value: val,
-                prev: old_last,
+                prev: Weak::new(),
                 next: self.tail.clone(),
-            };
-            self.push_back(Rc::new(RefCell::new(last)));
+            }));
+            self.cache.insert(key, node.clone());
+            self.push_back(node);
         }
     }
 }
