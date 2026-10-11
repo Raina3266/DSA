@@ -44,7 +44,7 @@ use std::{
     rc::{Rc, Weak},
 };
 
-enum Node {
+pub enum Node {
     Data {
         key: i32,
         value: i32,
@@ -83,22 +83,34 @@ impl LRUCache {
         // 1. Upgrade the Weak inside Node::Tail to get the current last node
         // Read tail’s Weak, upgrade to Rc, no need of mutability
         let last: Rc<RefCell<Node>> = match &*self.tail.borrow() {
-            Node::Tail(prev) => prev.upgrade().expect("tail's back-pointer is never dangling"),
+            Node::Tail(prev) => prev
+                .upgrade()
+                .expect("tail's back-pointer is never dangling"),
             _ => unreachable!("self.tail always holds Node::Tail"),
         };
         // 2. Change the next field of the last
         match &mut *last.borrow_mut() {
-            Node::Data { key, value, prev, next } => {
+            Node::Data {
+                key,
+                value,
+                prev,
+                next,
+            } => {
                 *next = input.clone();
-            },
+            }
             _ => unreachable!(),
         }
         // 3. Change the prev and next field of the input
         match &mut *input.borrow_mut() {
-            Node::Data { key, value, prev, next } => {
+            Node::Data {
+                key,
+                value,
+                prev,
+                next,
+            } => {
                 *prev = Rc::downgrade(&last);
                 *next = self.tail.clone();
-            },
+            }
             _ => unreachable!("push_back expects a data node"),
         }
         // 4. Change tail’s internal Weak to point at input
@@ -107,7 +119,7 @@ impl LRUCache {
 
     fn move_to_end(&self, input: Rc<RefCell<Node>>) {
         // 1. Get the prev and next node of input
-        let (prev, next) = match &*input.borrow() {
+        let (prev_node, next_node) = match &*input.borrow() {
             Node::Data { prev, next, .. } => (
                 prev.upgrade().expect("prev is never dangling"),
                 next.clone(),
@@ -115,16 +127,110 @@ impl LRUCache {
             _ => unreachable!("remove expects a data node"),
         };
         // 2. Change the next field of the prev node
-        
+        match &mut *prev_node.borrow_mut() {
+            Node::Data {
+                key,
+                value,
+                prev,
+                next,
+            } => {
+                *next = next_node.clone();
+            }
+            Node::Head(next) => *next = next_node.clone(),
+            _ => unreachable!("remove expects a data node"),
+        }
         // 3. Change the prev field of the next node
+        match &mut *next_node.borrow_mut() {
+            Node::Data {
+                key,
+                value,
+                prev,
+                next,
+            } => {
+                *prev = Rc::downgrade(&prev_node);
+            }
+            Node::Tail(prev) => *prev = Rc::downgrade(&prev_node),
+            _ => unreachable!("remove expects a data node"),
+        }
+        self.push_back(input);
     }
 
     pub fn get(&mut self, key: i32) -> i32 {
-        todo!()
+        if let Some(node) = self.cache.get(&key) {
+            let result = match &*node.borrow() {
+                Node::Data { value, .. } => *value,
+                _ => unreachable!("cache only stores data nodes"),
+            };
+            self.move_to_end(node.clone());
+            result
+        } else {
+            -1
+        }
     }
 
-    pub fn put(&mut self, key: i32, value: i32) {
-        todo!()
+    fn is_full(&self) -> bool {
+        self.cache.len() == self.capacity
+    }
+
+    fn pop_front(&self) -> Option<Rc<RefCell<Node>>> {
+        let first = match &*self.head.borrow() {
+            Node::Head(head_node) => head_node.clone(),
+            _ => unreachable!(),
+        };
+        // empty list
+        if !matches!(&*first.borrow(), Node::Data { .. }) {
+            return None;
+        }
+
+        let second = match &*first.borrow() {
+            Node::Data { next, .. } => next.clone(),
+            _ => unreachable!(),
+        };
+        // list with only one node
+        match &mut *second.borrow_mut() {
+            Node::Data { prev, .. } => {
+                *prev = Rc::downgrade(&self.head);
+            }
+            Node::Tail(prev) => *prev = Rc::downgrade(&self.head),
+            _ => unreachable!(),
+        }
+        match &mut *self.head.borrow_mut() {
+            Node::Head(head_node) => {
+                *head_node = second;
+            }
+            _ => unreachable!(),
+        }
+        Some(first)
+    }
+
+    pub fn put(&mut self, key: i32, val: i32) {
+        if let Some(node) = self.cache.get(&key) {
+            match &mut *node.borrow_mut() {
+                Node::Data {
+                    key,
+                    value,
+                    prev,
+                    next,
+                } => *value = val,
+                _ => unreachable!(),
+            }
+        } else {
+            if self.is_full() {
+                self.pop_front();
+            }
+            let old_last = match &*self.tail.borrow() {
+                Node::Data { prev, .. } => prev.clone(),
+                Node::Head(head_node) => Rc::downgrade(&head_node),
+                _ => unreachable!(),
+            };
+            let last = Node::Data {
+                key,
+                value: val,
+                prev: old_last,
+                next: self.tail.clone(),
+            };
+            self.push_back(Rc::new(RefCell::new(last)));
+        }
     }
 }
 
