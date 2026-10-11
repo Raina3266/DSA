@@ -40,15 +40,31 @@
 
 #![allow(dead_code, unused_variables)]
 
-pub struct Logger {}
+use std::collections::{HashMap, hash_map::Entry};
+
+pub struct Logger {
+    logs: HashMap<String, i32>,
+}
 
 impl Logger {
     pub fn new() -> Self {
-        todo!()
+        Self {
+            logs: HashMap::new(),
+        }
     }
 
     pub fn should_print_message(&mut self, timestamp: i32, message: String) -> bool {
-        todo!()
+        match self.logs.entry(message) {
+            Entry::Occupied(mut e) if timestamp - *e.get() >= 10 => {
+                e.insert(timestamp);
+                true
+            }
+            Entry::Occupied(_) => false,
+            Entry::Vacant(e) => {
+                e.insert(timestamp);
+                true
+            }
+        }
     }
 }
 
