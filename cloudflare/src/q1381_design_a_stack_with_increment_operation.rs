@@ -34,7 +34,8 @@
 //!   stk.pop();                            // return 202 --> Return top of the stack 202, stack becomes [201]
 //!   stk.pop();                            // return 201 --> Return top of the stack 201, stack becomes []
 //!   stk.pop();                            // return -1 --> Stack is empty return -1.
-//!
+//! 12345
+//! 123
 //! Constraints:
 //!   * 1 <= maxSize, x, k <= 1000
 //!   * 0 <= val <= 100
@@ -43,23 +44,41 @@
 
 #![allow(dead_code, unused_variables)]
 
-pub struct CustomStack {}
+pub struct CustomStack {
+    stack: Vec<i32>,
+    capacity: usize,
+}
 
 impl CustomStack {
-    pub fn new(max_size: i32) -> Self {
-        todo!()
+    pub fn new(max_size: usize) -> Self {
+        Self {
+            stack: Vec::with_capacity(max_size),
+            capacity: max_size,
+        }
+    }
+
+    fn is_full(&self) -> bool {
+        self.stack.len() == self.capacity
     }
 
     pub fn push(&mut self, x: i32) {
-        todo!()
+        if !self.is_full() {
+            self.stack.push(x);
+        }
     }
 
     pub fn pop(&mut self) -> i32 {
-        todo!()
+        if let Some(pop) = self.stack.pop() {
+            pop
+        } else {
+            -1
+        }
     }
 
     pub fn increment(&mut self, k: i32, val: i32) {
-        todo!()
+        for element in self.stack.iter_mut().take(k as usize) {
+            *element += val;
+        }
     }
 }
 
@@ -120,5 +139,3 @@ mod tests {
         assert_eq!(stk.pop(), 6);
     }
 }
-
-
