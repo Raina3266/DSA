@@ -43,19 +43,38 @@
 
 #![allow(dead_code, unused_variables)]
 
-pub struct HitCounter {}
+pub struct HitCounter {
+    counters: Vec<i32>,
+}
 
 impl HitCounter {
     pub fn new() -> Self {
-        todo!()
+        Self {
+            counters: Vec::new(),
+        }
     }
 
     pub fn hit(&mut self, timestamp: i32) {
-        todo!()
+        self.counters.push(timestamp);
     }
 
     pub fn get_hits(&self, timestamp: i32) -> i32 {
-        todo!()
+        if self.counters.is_empty() {
+            return 0;
+        }
+        if timestamp <= 300 {
+            self.counters.len() as i32
+        } else {
+            let mut count = 0;
+            let last = self.counters.len() - 1;
+            for n in 0..=last {
+                if self.counters[last - n] <= timestamp - 300 {
+                    return count;
+                }
+                count += 1;
+            }
+            count
+        }
     }
 }
 

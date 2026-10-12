@@ -1,4 +1,5 @@
-//! 359. Logger Rate Limiter — https://leetcode.com/problems/logger-rate-limiter/
+//! 359. Logger Rate Limiter (finish)
+//! https://leetcode.com/problems/logger-rate-limiter/
 //!
 //! Design a logger system that receives a stream of messages along with their
 //! timestamps. Each unique message should only be printed at most every 10
