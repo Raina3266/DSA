@@ -50,35 +50,62 @@
 
 #![allow(dead_code, unused_variables)]
 
-pub struct MyCircularQueue {}
+pub struct MyCircularQueue {
+    data: Vec<i32>,
+    head: usize,
+    len: usize,
+}
 
 impl MyCircularQueue {
-    pub fn new(k: i32) -> Self {
-        todo!()
+    pub fn new(k: usize) -> Self {
+        Self {
+            data: vec![0; k],
+            head: 0,
+            len: 0,
+        }
     }
 
     pub fn en_queue(&mut self, value: i32) -> bool {
-        todo!()
+        if self.is_full() {
+            return false;
+        }
+        let index = (self.head + self.len) % self.data.len();
+        self.data[index] = value;
+        self.len += 1;
+        true
     }
 
     pub fn de_queue(&mut self) -> bool {
-        todo!()
+        if self.is_empty() {
+            return false;
+        }
+        self.head = (self.head + 1) % self.data.len();
+        self.len -= 1;
+        true
     }
 
     pub fn front(&self) -> i32 {
-        todo!()
+        if self.is_empty() {
+            -1
+        } else {
+            self.data[self.head]
+        }
     }
 
     pub fn rear(&self) -> i32 {
-        todo!()
+        if self.is_empty() {
+            -1
+        } else {
+            self.data[(self.head + self.len - 1) % self.data.len()]
+        }
     }
 
     pub fn is_empty(&self) -> bool {
-        todo!()
+        self.len == 0
     }
 
     pub fn is_full(&self) -> bool {
-        todo!()
+        self.len == self.data.len()
     }
 }
 

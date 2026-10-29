@@ -44,37 +44,36 @@
 #![allow(dead_code, unused_variables)]
 
 pub struct HitCounter {
-    counters: Vec<i32>,
+    timestamps: [i32; 300],
+    counts: [i32; 300],
 }
 
 impl HitCounter {
     pub fn new() -> Self {
         Self {
-            counters: Vec::new(),
+            timestamps: [0; 300],
+            counts: [0; 300],
         }
     }
 
     pub fn hit(&mut self, timestamp: i32) {
-        self.counters.push(timestamp);
+        let index = (timestamp % 300) as usize;
+        if self.timestamps[index] != timestamp {
+            // A different timestamp in this bucket is at least 300 seconds old.
+            self.timestamps[index] = timestamp;
+            self.counts[index] = 1;
+        } else {
+            self.counts[index] += 1;
+        }
     }
 
     pub fn get_hits(&self, timestamp: i32) -> i32 {
-        if self.counters.is_empty() {
-            return 0;
-        }
-        if timestamp <= 300 {
-            self.counters.len() as i32
-        } else {
-            let mut count = 0;
-            let last = self.counters.len() - 1;
-            for n in 0..=last {
-                if self.counters[last - n] <= timestamp - 300 {
-                    return count;
-                }
-                count += 1;
-            }
-            count
-        }
+        self.timestamps
+            .iter()
+            .zip(self.counts.iter())
+            .filter(|(hit_timestamp, _)| timestamp - **hit_timestamp < 300)
+            .map(|(_, count)| *count)
+            .sum()
     }
 }
 
@@ -107,6 +106,7 @@ mod tests {
     fn no_hits_returns_zero() {
         let counter = HitCounter::new();
         assert_eq!(counter.get_hits(10), 0);
+        assert_eq!(counter.get_hits(301), 0);
     }
 
     #[test]
@@ -115,6 +115,27 @@ mod tests {
         counter.hit(2);
         assert_eq!(counter.get_hits(301), 1); // 301 - 300 = 1 < 2, still counted
         assert_eq!(counter.get_hits(302), 0); // 302 - 300 = 2, expired
+    }
+
+    #[test]
+    fn reused_bucket_resets_count() {
+        let mut counter = HitCounter::new();
+        counter.hit(1);
+        counter.hit(1);
+        counter.hit(2);
+        counter.hit(301);
+        assert_eq!(counter.get_hits(301), 2);
+        assert_eq!(counter.get_hits(302), 1);
+    }
+
+    #[test]
+    fn large_timestamp_gap_expires_old_hits() {
+        let mut counter = HitCounter::new();
+        counter.hit(1);
+        counter.hit(2);
+        assert_eq!(counter.get_hits(2_000_000_000), 0);
+        counter.hit(2_000_000_000);
+        assert_eq!(counter.get_hits(2_000_000_000), 1);
     }
 
     #[test]

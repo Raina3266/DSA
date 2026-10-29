@@ -2,6 +2,7 @@ fn main() {
     println!("Hello, world!");
 }
 
+mod rate_limiter;
 mod q1381_design_a_stack_with_increment_operation;
 mod q146_lru_cache;
 mod q146_lru_cache_copy;
